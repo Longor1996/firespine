@@ -1,0 +1,18 @@
+[package]
+name = "firespine"
+version = "0.1.0"
+license = "MIT OR Apache-2.0"
+authors = ["Longor1996 <lalongok@gmail.com>"]
+edition = "2021"
+
+description = "A relatively simple framework-as-a-library for application-state, -routing and event-handling."
+keywords = ["framework"]
+
+readme = "README.md"
+homepage = "https://github.com/Longor1996/firespine"
+repository = "https://github.com/Longor1996/firespine"
+
+[dependencies]
+log = "^0.4"
+futures = "^0.3"
+downcast-rs = "^1.2"
