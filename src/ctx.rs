@@ -9,7 +9,7 @@ pub struct NodeContext<'c> {
     pub name: Arc<str>,
     
     /// The nodes that are not current / above the current node.
-    pub cons: &'c mut [NodeHandlerBox],
+    pub cons: &'c mut [NamedNodeHandlerBox],
 }
 
 impl<'c> NodeContext<'c> {
@@ -67,7 +67,7 @@ pub struct OuterNodeContext<'c> {
     pub(crate) context: NodeContext<'c>,
     
     /// The currently active node.
-    pub(crate) current: &'c mut NodeHandlerBox
+    pub(crate) current: &'c mut NamedNodeHandlerBox
 }
 
 // TODO: Does it make sense to deref the NodeContext?

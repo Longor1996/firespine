@@ -73,13 +73,16 @@ pub type NodeHandlerRequestRes = Result<NodeHandlerRequest, Box<dyn std::error::
 pub type NodeHandlerRequest = futures::channel::oneshot::Receiver<NodeHandlerCreated>;
 
 /// The result of a completed [`NodeHandlerRequest`].
-pub type NodeHandlerCreated = Result<NodeHandlerBox, Box<dyn std::error::Error>>;
+pub type NodeHandlerCreated = Result<NamedNodeHandlerBox, Box<dyn std::error::Error>>;
 
-/// A box holding a NodeHandler instance.
-pub type NodeHandlerBox = (Arc<str>, Box<dyn NodeHandler>);
+/// A box holding a [`NodeHandler`] instance.
+pub type NodeHandlerBox = Box<dyn NodeHandler>;
+
+/// A named [`NodeHandlerBox`].
+pub type NamedNodeHandlerBox = (Arc<str>, NodeHandlerBox);
 
 /// Node handler storage.
-pub type Nodes = Vec<NodeHandlerBox>;
+pub type Nodes = Vec<NamedNodeHandlerBox>;
 
 /// A handler that does nothing.
 pub mod empty {
@@ -98,8 +101,8 @@ pub mod cascade {
     /// An event-handler that does precisely nothing.
     #[derive(Debug)]
     pub struct CascadingEventHandler {
-        outer: NodeHandlerBox,
-        inner: NodeHandlerBox,
+        outer: NamedNodeHandlerBox,
+        inner: NamedNodeHandlerBox,
     }
     
     impl NodeHandler for CascadingEventHandler {

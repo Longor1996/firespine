@@ -61,7 +61,7 @@ impl Backbone {
     }
     
     /// Creates a new backbone instance.
-    pub fn from_box(root_handler: NodeHandlerBox) -> Self {
+    pub fn from_box(root_handler: NamedNodeHandlerBox) -> Self {
         Self {
             nodes: vec![root_handler],
             thunks: Thunks::default(),
