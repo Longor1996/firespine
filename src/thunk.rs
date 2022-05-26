@@ -90,28 +90,47 @@ mod events {
     #[derive(Debug)]
     pub struct NavigationLeaveEvent;
     impl crate::Event for NavigationLeaveEvent {}
+    
+    /// Event that is fired when navigation begins; cancellable.
+    #[derive(Debug)]
+    pub struct NavigationBeginningEvent {
+        /// Prevent navigation from happeneing?
+        pub cancel: bool
+    }
+    impl crate::Event for NavigationBeginningEvent {}
 }
 
 
 // Thunk handling.
 impl Backbone {
     /// Navigate to a different path.
-    pub fn navigate(&mut self, mut path: &str) {
+    pub fn navigate(&mut self, mut path: &str) -> bool {
         let original_path = path;
         let current_path = self.path_as_string();
         
         // Inexact test to avoid moving to the current node...
         if current_path == path {
             crate::warn!("Attempted to navigate to current path; ignoring command.");
-            return;
+            return false;
         }
         
         // Avoid infinite movement.
         if self.thunks.len() > 16 {
-            return;
+            return false;
         }
         
-        // TODO: Implement CANCELLABLE NavigationBeginningEvent right about here.
+        let mut begin = events::NavigationBeginningEvent {
+            cancel: false,
+        };
+        
+        self.get_context()
+            .unwrap()
+            .process_event(&mut begin);
+        
+        if begin.cancel {
+            crate::info!("Navigating from '{current_path}' to '{original_path}' was cancelled.");
+            return false;
+        }
         
         while let Some((thunk, subpath)) = Thunk::parse(path) {
             path = subpath;
@@ -120,6 +139,7 @@ impl Backbone {
         
         self.thunks.push_back(Thunk::End);
         crate::info!("Navigating from '{current_path}' to '{original_path}': {} thunks in queue: {}", self.thunks.len(), self.thunks_as_string());
+        true
     }
     
     /// Returns if the backbone is navigating.
