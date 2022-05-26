@@ -1,6 +1,6 @@
 //! Backbone navigation by means of thunks.
 use crate::*;
-use std::{collections::VecDeque};
+use std::collections::VecDeque;
 
 /// Queue of thunks.
 pub type Thunks = VecDeque<Thunk>;
