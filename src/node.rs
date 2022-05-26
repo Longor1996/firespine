@@ -14,8 +14,8 @@ pub trait NodeHandler: std::fmt::Debug + Send + Sync {
         &'e mut self,
         _name: Arc<str>,
         _context: &'e mut NodeContext,
-    ) -> NodeHandlerRequest {
-        Err("Node has no children".to_owned())
+    ) -> NodeHandlerRequestRes {
+        Err("Node has no children".into())
     }
     
     /// Called when the node receives an [`Event`] (wrapped in a [`EventWrapper`]).
@@ -66,14 +66,14 @@ pub trait NodeHandler: std::fmt::Debug + Send + Sync {
     ) -> Option<Arc<dyn NodeComponentSync>> {None}
 }
 
-/// A potential future for the creation of a node-handler.
-pub type NodeHandlerRequest = Result<NodeHandlerAwaiter, String>;
+/// A potential pending request for the creation of a node-handler.
+pub type NodeHandlerRequestRes = Result<NodeHandlerRequest, Box<dyn std::error::Error>>;
 
-/// A future for the creation of a node-handler.
-pub type NodeHandlerAwaiter = futures::channel::oneshot::Receiver<NodeHandlerCreated>;
+/// A pending request for the creation of a node-handler.
+pub type NodeHandlerRequest = futures::channel::oneshot::Receiver<NodeHandlerCreated>;
 
-/// Result of node handler creation.
-pub type NodeHandlerCreated = Result<NodeHandlerBox, String>;
+/// The result of a completed [`NodeHandlerRequest`].
+pub type NodeHandlerCreated = Result<NodeHandlerBox, Box<dyn std::error::Error>>;
 
 /// A box holding a NodeHandler instance.
 pub type NodeHandlerBox = (Arc<str>, Box<dyn NodeHandler>);
@@ -107,7 +107,7 @@ pub mod cascade {
             &'e mut self,
             name: Arc<str>,
             context: &'e mut NodeContext,
-        ) -> NodeHandlerRequest {
+        ) -> NodeHandlerRequestRes {
             let inner_req = self.inner.1.handle_node_request(name.clone(), context);
             
             if let Err(_err) = inner_req {

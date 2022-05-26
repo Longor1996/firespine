@@ -20,7 +20,7 @@ pub enum Thunk {
     ToNode(String),
     
     /// Waiting for a node to construct itself.
-    Waiting(Arc<str>, NodeHandlerAwaiter),
+    Waiting(Arc<str>, NodeHandlerRequest),
     
     /// Something went horribly wrong.
     Error(Box<dyn std::error::Error>),
