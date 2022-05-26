@@ -3,7 +3,7 @@ use crate::*;
 
 /// Node Context: A disjoint set of the backbone struct.
 /// 
-/// Used by events to fetch components from the backbone to interact with.
+/// Used by event-handlers to fetch components from the backbone to interact with.
 pub struct NodeContext<'c> {
     /// Name of the current node.
     pub name: Arc<str>,
@@ -13,7 +13,7 @@ pub struct NodeContext<'c> {
 }
 
 impl<'c> NodeContext<'c> {
-    /// Returns a component of the given type, if possible.
+    /// Returns a reference to a [`NodeComponent`] of the given type `C`, if one exists.
     pub fn get_component<C: NodeComponent + 'static>(&self) -> Option<&dyn NodeComponent> {
         let type_id = TypeId::of::<C>();
         
@@ -26,7 +26,7 @@ impl<'c> NodeContext<'c> {
         None
     }
     
-    /// Returns a component of the given type, if possible.
+    /// Returns a [`std::cell::RefCell`]'d [`NodeComponent`] of the given type `C`, if one exists.
     pub fn get_component_mut<C: NodeComponent + 'static>(&mut self) -> Option<&RefCell<dyn NodeComponent>> {
         let type_id = TypeId::of::<C>();
         
@@ -39,7 +39,7 @@ impl<'c> NodeContext<'c> {
         None
     }
     
-    /// Returns a component of the given type, if possible.
+    /// Returns an [`std::sync::Arc`]'d [`NodeComponent`] of the given type `C`, if one exists.
     pub fn get_component_arc<C: NodeComponentSync + 'static>(&mut self) -> Option<Arc<dyn NodeComponentSync>> {
         let type_id = TypeId::of::<C>();
         
@@ -99,12 +99,12 @@ impl<'c> OuterNodeContext<'c> {
         })
     }
     
-    /// Fires an event to run trough the backbone to the current node.
+    /// Fires an [`Event`] to run trough the backbone to the current node.
     pub fn process_event<E: Event>(&mut self, event: &mut E) {
         self.process_event_wrapper(EventWrapper::new(event));
     }
     
-    /// Fires a wrapped event to run trough the backbone to the current node.
+    /// Fires an [`Event`], wrapped in a [`EventWrapper`], to run trough the backbone to the current node.
     pub fn process_event_wrapper(&mut self, mut wrapper: EventWrapper) {
         wrapper = wrapper.into_phase(EventPhase::Falling);
         
@@ -139,7 +139,7 @@ impl<'c> OuterNodeContext<'c> {
 }
 
 impl Backbone {
-    /// Returns a node-context focused on the root node, if there is one.
+    /// Returns an [`OuterNodeContext`] focused on the root node, if there is one.
     pub fn get_root_context(&mut self) -> Option<OuterNodeContext> {
         
         let first = match self.nodes.first_mut() {
@@ -156,7 +156,7 @@ impl Backbone {
         })
     }
     
-    /// Returns a node-context focused on the current node, if there is one.
+    /// Returns an [`OuterNodeContext`] focused on the current node, if there is one.
     pub fn get_context(&mut self) -> Option<OuterNodeContext> {
         
         let (last, cons) = match self.nodes.split_last_mut() {
@@ -173,7 +173,7 @@ impl Backbone {
         })
     }
     
-    /// Returns a node-context focused on the node indicated by the `at`-parameter.
+    /// Returns an [`OuterNodeContext`] focused on the node indicated by the `at`-parameter.
     pub fn get_context_at(&mut self, at: usize) -> Option<OuterNodeContext> {
         if at > self.nodes.len() {return None}
         let (start, end) = self.nodes.split_at_mut(at);
@@ -187,9 +187,9 @@ impl Backbone {
         })
     }
     
+    // TODO: Implement a `get_context_for(PATH)`-method.
     
-    
-    /// Returns a component of the given type, if possible.
+    /// Returns a reference to a [`NodeComponent`] of the given type `C`, if one exists.
     pub fn get_component<C: NodeComponent + 'static>(&self) -> Option<&dyn NodeComponent> {
         let type_id = TypeId::of::<C>();
         
@@ -202,7 +202,7 @@ impl Backbone {
         None
     }
     
-    /// Returns a component of the given type, if possible.
+    /// Returns a [`std::cell::RefCell`]'d [`NodeComponent`] of the given type `C`, if one exists.
     pub fn get_component_mut<C: NodeComponent + 'static>(&self) -> Option<&RefCell<dyn NodeComponent>> {
         let type_id = TypeId::of::<C>();
         
@@ -215,7 +215,7 @@ impl Backbone {
         None
     }
     
-    /// Returns a component of the given type, if possible.
+    /// Returns an [`std::sync::Arc`]'d [`NodeComponent`] of the given type `C`, if one exists.
     pub fn get_component_arc<C: NodeComponentSync + 'static>(&mut self) -> Option<Arc<dyn NodeComponentSync>> {
         let type_id = TypeId::of::<C>();
         

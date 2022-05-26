@@ -29,26 +29,26 @@ pub trait NodeHandler: std::fmt::Debug + Send + Sync {
         }
     }
     
-    /// Called by NodeContext to fetch a component.
+    /// Called by [`NodeContext`] to fetch a component.
     fn get_comp(
         &self,
         _ctype: TypeId
     ) -> Option<&dyn NodeComponent> {None}
     
-    /// Called by NodeContext to fetch a mutable component.
+    /// Called by [`NodeContext`] to fetch a mutable component.
     fn get_comp_mut(
         &self,
         _ctype: TypeId
     ) -> Option<&RefCell<dyn NodeComponent>> {None}
     
-    /// Called by NodeContext to fetch a async component.
+    /// Called by [`NodeContext`] to fetch a async component.
     fn get_comp_arc(
         &self,
         _ctype: TypeId
     ) -> Option<Arc<dyn NodeComponentSync>> {None}
 }
 
-/// A future for the creation of a node-handler.
+/// A potential future for the creation of a node-handler.
 pub type NodeHandlerRequest = Result<NodeHandlerAwaiter, String>;
 
 /// A future for the creation of a node-handler.
