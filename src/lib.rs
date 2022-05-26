@@ -64,6 +64,12 @@ impl Default for Backbone {
     }
 }
 
+impl<N: NodeHandler + 'static> From<N> for Backbone {
+    fn from(node: N) -> Self {
+        Self::from_obj(node)
+    }
+}
+
 // Lööp.
 impl Backbone {
     /// Backbone update function; to be called repeatedly in a lööp.

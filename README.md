@@ -29,7 +29,7 @@ struct MyEvent;
 impl Event for MyEvent {}
 
 fn main() {
-    let mut backbone = Backbone::from_obj(MyNodeHandler);
+    let mut backbone = Backbone::from(MyNodeHandler);
     
     // 'navigate' to a path in the backbone.
     backbone.navigate("/local/world-3/play");
