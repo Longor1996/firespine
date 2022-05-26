@@ -5,6 +5,11 @@ use crate::*;
 /// All user-logic and -state for a node is owned by it's associated handler.
 pub trait NodeHandler: std::fmt::Debug + Send + Sync {
     /// Called when a new child-node is to be created.
+    /// 
+    /// **Note:**
+    /// > The name of the child-node is *not* a full path, just a name.  
+    /// > 
+    /// > Use [`NodeContext::get_child_name`] to get the full path.
     fn handle_node_request<'e>(
         &'e mut self,
         _name: Arc<str>,
@@ -13,7 +18,20 @@ pub trait NodeHandler: std::fmt::Debug + Send + Sync {
         Err("Node has no children".to_owned())
     }
     
-    /// Called when the node receives an event.
+    /// Called when the node receives an [`Event`] (wrapped in a [`EventWrapper`]).
+    /// 
+    /// i.e: Given a struct `MyEvent` that impls [`Event`] ...
+    /// ```rust
+    /// fn handle_event<'e>(
+    ///     &'e mut self,
+    ///     event: &'e mut EventWrapper,
+    ///     context: &'e mut NodeContext,
+    /// ) {
+    ///     if let Some(my_event) = event.downcast_ref::<MyEvent>() {
+    ///         // Handle the event! :D
+    ///     }
+    /// }
+    /// ```
     fn handle_event<'e>(
         &'e mut self,
         event: &'e mut EventWrapper,
@@ -29,19 +47,19 @@ pub trait NodeHandler: std::fmt::Debug + Send + Sync {
         }
     }
     
-    /// Called by [`NodeContext`] to fetch a component.
+    /// Called by [`NodeContext`] to fetch a component for a descendant node (or the backbone).
     fn get_comp(
         &self,
         _ctype: TypeId
     ) -> Option<&dyn NodeComponent> {None}
     
-    /// Called by [`NodeContext`] to fetch a mutable component.
+    /// Called by [`NodeContext`] to fetch a mutable component for a descendant node (or the backbone).
     fn get_comp_mut(
         &self,
         _ctype: TypeId
     ) -> Option<&RefCell<dyn NodeComponent>> {None}
     
-    /// Called by [`NodeContext`] to fetch a async component.
+    /// Called by [`NodeContext`] to fetch a async component for a descendant node (or the backbone).
     fn get_comp_arc(
         &self,
         _ctype: TypeId

@@ -1,14 +1,14 @@
 //! Node Context
 use crate::*;
 
-/// Node Context: A disjoint set of the backbone struct.
+/// Node Context: A disjoint subset of the ['Backbone'].
 /// 
-/// Used by event-handlers to fetch components from the backbone to interact with.
+/// Used by [`NodeHandler`]'s to fetch [`NodeComponent`]'s from the backbone to interact with.
 pub struct NodeContext<'c> {
     /// Name of the current node.
     pub name: Arc<str>,
     
-    /// The nodes that are not current.
+    /// The nodes that are not current / above the current node.
     pub cons: &'c mut [NodeHandlerBox],
 }
 
@@ -61,7 +61,7 @@ impl<'c> NodeContext<'c> {
     
 }
 
-/// Outer Node Context: A disjoint set of the backbone struct and a 'current' node.
+/// Outer Node Context: A [`NodeContext`] paired with a 'current' node.
 pub struct OuterNodeContext<'c> {
     /// The partial/disjoint backbone.
     pub(crate) context: NodeContext<'c>,
@@ -70,6 +70,7 @@ pub struct OuterNodeContext<'c> {
     pub(crate) current: &'c mut NodeHandlerBox
 }
 
+// TODO: Does it make sense to deref the NodeContext?
 impl<'c> std::ops::Deref for OuterNodeContext<'c> {
     type Target = NodeContext<'c>;
     
