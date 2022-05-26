@@ -192,7 +192,7 @@ impl Backbone {
                 let mut ctx = self.get_context().unwrap();
                 let child_name = ctx.get_child_name(&nn);
                 
-                match ctx.outer.1.handle_node_request(child_name.clone(), &mut ctx.inner) {
+                match ctx.current.1.handle_node_request(child_name.clone(), &mut ctx.context) {
                     Err(err) => {
                         Some(Thunk::Error(err.into()))
                     },

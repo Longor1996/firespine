@@ -56,21 +56,24 @@ impl<'c> NodeContext<'c> {
 
 /// Outer Node Context: A disjoint set of the backbone struct and a 'current' node.
 pub struct OuterNodeContext<'c> {
-    pub(crate) inner: NodeContext<'c>,
-    pub(crate) outer: &'c mut NodeHandlerBox
+    /// The partial/disjoint backbone.
+    pub(crate) context: NodeContext<'c>,
+    
+    /// The currently active node.
+    pub(crate) current: &'c mut NodeHandlerBox
 }
 
 impl<'c> std::ops::Deref for OuterNodeContext<'c> {
     type Target = NodeContext<'c>;
     
     fn deref(&self) -> &Self::Target {
-        &self.inner
+        &self.context
     }
 }
 
 impl<'c> std::ops::DerefMut for OuterNodeContext<'c> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.inner
+        &mut self.context
     }
 }
 
@@ -78,21 +81,21 @@ impl<'c> OuterNodeContext<'c> {
     
     /// Returns the fully formed name for a child with the given partial name.
     pub fn get_child_name(&self, name: &str) -> Arc<str> {
-        let pname = if self.inner.name.as_ref() == "/" {""} else {self.inner.name.as_ref()};
+        let pname = if self.context.name.as_ref() == "/" {""} else {self.context.name.as_ref()};
         Arc::from(format!("{pname}/{name}"))
     }
     
-    /// Returns a new context that is a subset of this context *without* the current node.
-    pub fn get_subset(&mut self, at: usize) -> Option<OuterNodeContext> {
-        if at > self.inner.cons.len() {return None}
-        let (start, end) = self.inner.cons.split_at_mut(at);
+    /// Returns a new [`OuterNodeContext`] that is a subset of this context *excluding* the current node.
+    pub fn get_subcontext_at(&mut self, at: usize) -> Option<OuterNodeContext> {
+        if at > self.context.cons.len() {return None}
+        let (start, end) = self.context.cons.split_at_mut(at);
         
         Some(OuterNodeContext {
-            inner: NodeContext {
+            context: NodeContext {
                 name: end[0].0.clone(),
                 cons: &mut * start,
             },
-            outer: &mut end[0]
+            current: &mut end[0]
         })
     }
     
@@ -105,29 +108,29 @@ impl<'c> OuterNodeContext<'c> {
     pub fn process_event_wrapper(&mut self, mut wrapper: EventWrapper) {
         wrapper = wrapper.into_phase(EventPhase::Falling);
         
-        for idx in 0..self.inner.cons.len() {
+        for idx in 0..self.context.cons.len() {
             if !wrapper.can_fall() {
                 break;
             }
             
-            if let Some(mut subctx) = self.get_subset(idx) {
-                subctx.outer.1.handle_event(&mut wrapper, &mut subctx.inner);
+            if let Some(mut subctx) = self.get_subcontext_at(idx) {
+                subctx.current.1.handle_event(&mut wrapper, &mut subctx.context);
             }
         }
         
         if wrapper.can_eval() {
             wrapper = wrapper.into_phase(EventPhase::Acting);
-            self.outer.1.handle_event(&mut wrapper, &mut self.inner);
+            self.current.1.handle_event(&mut wrapper, &mut self.context);
         }
         
         wrapper = wrapper.into_phase(EventPhase::Rising);
-        for idx in (0..self.inner.cons.len()).rev() {
+        for idx in (0..self.context.cons.len()).rev() {
             if !wrapper.can_rise() {
                 break;
             }
             
-            if let Some(mut subctx) = self.get_subset(idx) {
-                subctx.outer.1.handle_event(&mut wrapper, &mut subctx.inner);
+            if let Some(mut subctx) = self.get_subcontext_at(idx) {
+                subctx.current.1.handle_event(&mut wrapper, &mut subctx.context);
             }
         }
         
@@ -145,11 +148,11 @@ impl Backbone {
         };
         
         Some(OuterNodeContext {
-            inner: NodeContext {
+            context: NodeContext {
                 name: first.0.clone(),
                 cons: &mut[],
             },
-            outer: first
+            current: first
         })
     }
     
@@ -162,25 +165,25 @@ impl Backbone {
         };
         
         Some(OuterNodeContext {
-            inner: NodeContext {
+            context: NodeContext {
                 name: last.0.clone(),
                 cons: &mut * cons,
             },
-            outer: last
+            current: last
         })
     }
     
     /// Returns a node-context focused on the node indicated by the `at`-parameter.
-    pub fn get_subset(&mut self, at: usize) -> Option<OuterNodeContext> {
+    pub fn get_context_at(&mut self, at: usize) -> Option<OuterNodeContext> {
         if at > self.nodes.len() {return None}
         let (start, end) = self.nodes.split_at_mut(at);
         
         Some(OuterNodeContext {
-            inner: NodeContext {
+            context: NodeContext {
                 name: end[0].0.clone(),
                 cons: &mut * start,
             },
-            outer: &mut end[0]
+            current: &mut end[0]
         })
     }
     
