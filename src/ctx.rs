@@ -13,6 +13,13 @@ pub struct NodeContext<'c> {
 }
 
 impl<'c> NodeContext<'c> {
+    
+    /// Returns the fully formed name for a child with the given partial name.
+    pub fn get_child_name(&self, name: &str) -> Arc<str> {
+        let pname = if self.name.as_ref() == "/" {""} else {self.name.as_ref()};
+        Arc::from(format!("{pname}/{name}"))
+    }
+    
     /// Returns a reference to a [`NodeComponent`] of the given type `C`, if one exists.
     pub fn get_component<C: NodeComponent + 'static>(&self) -> Option<&dyn NodeComponent> {
         let type_id = TypeId::of::<C>();
@@ -81,8 +88,7 @@ impl<'c> OuterNodeContext<'c> {
     
     /// Returns the fully formed name for a child with the given partial name.
     pub fn get_child_name(&self, name: &str) -> Arc<str> {
-        let pname = if self.context.name.as_ref() == "/" {""} else {self.context.name.as_ref()};
-        Arc::from(format!("{pname}/{name}"))
+        self.context.get_child_name(name)
     }
     
     /// Returns a new [`OuterNodeContext`] that is a subset of this context *excluding* the current node.
