@@ -80,6 +80,16 @@ mod events {
     #[derive(Debug)]
     pub struct NavigationCompletionEvent;
     impl crate::Event for NavigationCompletionEvent {}
+    
+    /// Event that is fired when navigation enters a node.
+    #[derive(Debug)]
+    pub struct NavigationEnterEvent;
+    impl crate::Event for NavigationEnterEvent {}
+    
+    /// Event that is fired when navigation leaves a node.
+    #[derive(Debug)]
+    pub struct NavigationLeaveEvent;
+    impl crate::Event for NavigationLeaveEvent {}
 }
 
 
@@ -147,14 +157,21 @@ impl Backbone {
         out
     }
     
+    // TODO: Add `thiserror` and make this results error an enum...
     pub(crate) fn process_thunks(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let pthunk: Option<Thunk> = match self.thunks.pop_front() {
             None => return Ok(()),
             
             Some(Thunk::End) => {
-                crate::info!("Navigation Complete: {}", self.path_as_string());
-                self.get_context().unwrap().process_event(&mut events::NavigationCompletionEvent);
-                None
+                if self.thunks.is_empty() {
+                    crate::info!("Navigation Complete: {}", self.path_as_string());
+                    self.get_context()
+                        .unwrap()
+                        .process_event(&mut events::NavigationCompletionEvent);
+                    None
+                } else {
+                    Some(Thunk::End)
+                }
             },
             
             Some(Thunk::Error(error)) => {
@@ -169,7 +186,9 @@ impl Backbone {
                                 Ok(node) => {
                                     // Insert and jump into node...
                                     self.nodes.push(node);
-                                    // TODO: Fire event on node insertion.
+                                    self.get_context()
+                                        .unwrap()
+                                        .process_event(&mut events::NavigationEnterEvent);
                                     None
                                 },
                                 Err(err) => {
@@ -210,9 +229,12 @@ impl Backbone {
             Some(Thunk::ToParent) => {
                 // Don't pop the root!
                 if self.nodes.len() > 1 {
-                    self.nodes.pop();
-                    // TODO: Fire event on node exit.
-                    // TODO: Destroy the node.
+                    self.get_context()
+                        .unwrap()
+                        .process_event(&mut events::NavigationLeaveEvent);
+                    if let Some(node) = self.nodes.pop() {
+                        drop(node);
+                    }
                 }
                 None
             },
