@@ -26,7 +26,7 @@ impl NodeHandler for MyNodeHandler {
 
 #[derive(Debug)]
 struct MyEvent;
-impl Event for MyEvent;
+impl Event for MyEvent {}
 
 fn main() {
     let mut backbone = Backbone::from_obj(MyNodeHandler);
@@ -36,7 +36,7 @@ fn main() {
     
     loop {
         // Regularly call `update` in your mainloop...
-        backbone.update();
+        backbone.update().expect("backbone error");
         
         /// ...and fire away as you wish!
         backbone.get_context().process_event(&mut MyEvent);
