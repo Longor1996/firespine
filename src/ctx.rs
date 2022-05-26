@@ -25,7 +25,7 @@ impl<'c> NodeContext<'c> {
         let type_id = TypeId::of::<C>();
         
         for node in self.cons.iter().rev() {
-            if let Some(c) = node.1.get_comp(type_id) {
+            if let Some(c) = node.node.get_comp(type_id) {
                 return Some(c)
             }
         }
@@ -38,7 +38,7 @@ impl<'c> NodeContext<'c> {
         let type_id = TypeId::of::<C>();
         
         for node in self.cons.iter_mut().rev() {
-            if let Some(c) = node.1.get_comp_mut(type_id) {
+            if let Some(c) = node.node.get_comp_mut(type_id) {
                 return Some(c)
             }
         }
@@ -51,7 +51,7 @@ impl<'c> NodeContext<'c> {
         let type_id = TypeId::of::<C>();
         
         for node in self.cons.iter_mut().rev() {
-            if let Some(c) = node.1.get_comp_arc(type_id) {
+            if let Some(c) = node.node.get_comp_arc(type_id) {
                 return Some(c)
             }
         }
@@ -99,7 +99,7 @@ impl<'c> OuterNodeContext<'c> {
         
         Some(OuterNodeContext {
             context: NodeContext {
-                name: end[0].0.clone(),
+                name: end[0].name.clone(),
                 cons: &mut * start,
             },
             current: &mut end[0]
@@ -121,13 +121,13 @@ impl<'c> OuterNodeContext<'c> {
             }
             
             if let Some(mut subctx) = self.get_subcontext_at(idx) {
-                subctx.current.1.handle_event(&mut wrapper, &mut subctx.context);
+                subctx.current.node.handle_event(&mut wrapper, &mut subctx.context);
             }
         }
         
         if wrapper.can_eval() {
             wrapper = wrapper.into_phase(EventPhase::Acting);
-            self.current.1.handle_event(&mut wrapper, &mut self.context);
+            self.current.node.handle_event(&mut wrapper, &mut self.context);
         }
         
         wrapper = wrapper.into_phase(EventPhase::Rising);
@@ -137,7 +137,7 @@ impl<'c> OuterNodeContext<'c> {
             }
             
             if let Some(mut subctx) = self.get_subcontext_at(idx) {
-                subctx.current.1.handle_event(&mut wrapper, &mut subctx.context);
+                subctx.current.node.handle_event(&mut wrapper, &mut subctx.context);
             }
         }
         
@@ -156,7 +156,7 @@ impl Backbone {
         
         Some(OuterNodeContext {
             context: NodeContext {
-                name: first.0.clone(),
+                name: first.name.clone(),
                 cons: &mut[],
             },
             current: first
@@ -173,7 +173,7 @@ impl Backbone {
         
         Some(OuterNodeContext {
             context: NodeContext {
-                name: last.0.clone(),
+                name: last.name.clone(),
                 cons: &mut * cons,
             },
             current: last
@@ -187,7 +187,7 @@ impl Backbone {
         
         Some(OuterNodeContext {
             context: NodeContext {
-                name: end[0].0.clone(),
+                name: end[0].name.clone(),
                 cons: &mut * start,
             },
             current: &mut end[0]
@@ -201,7 +201,7 @@ impl Backbone {
         let type_id = TypeId::of::<C>();
         
         for node in self.nodes.iter().rev() {
-            if let Some(c) = node.1.get_comp(type_id) {
+            if let Some(c) = node.node.get_comp(type_id) {
                 return Some(c)
             }
         }
@@ -214,7 +214,7 @@ impl Backbone {
         let type_id = TypeId::of::<C>();
         
         for node in self.nodes.iter().rev() {
-            if let Some(c) = node.1.get_comp_mut(type_id) {
+            if let Some(c) = node.node.get_comp_mut(type_id) {
                 return Some(c)
             }
         }
@@ -227,7 +227,7 @@ impl Backbone {
         let type_id = TypeId::of::<C>();
         
         for node in self.nodes.iter_mut().rev() {
-            if let Some(c) = node.1.get_comp_arc(type_id) {
+            if let Some(c) = node.node.get_comp_arc(type_id) {
                 return Some(c)
             }
         }

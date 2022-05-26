@@ -79,7 +79,13 @@ pub type NodeHandlerCreated = Result<NamedNodeHandlerBox, Box<dyn std::error::Er
 pub type NodeHandlerBox = Box<dyn NodeHandler>;
 
 /// A named [`NodeHandlerBox`].
-pub type NamedNodeHandlerBox = (Arc<str>, NodeHandlerBox);
+#[derive(Debug)]
+pub struct NamedNodeHandlerBox {
+    /// The name(?) of the node.
+    pub(crate) name: Arc<str>,
+    /// The node.
+    pub(crate) node: NodeHandlerBox
+}
 
 /// Node handler storage.
 pub type Nodes = Vec<NamedNodeHandlerBox>;
@@ -111,10 +117,10 @@ pub mod cascade {
             name: Arc<str>,
             context: &'e mut NodeContext,
         ) -> NodeHandlerRequestRes {
-            let inner_req = self.inner.1.handle_node_request(name.clone(), context);
+            let inner_req = self.inner.node.handle_node_request(name.clone(), context);
             
             if let Err(_err) = inner_req {
-                return self.outer.1.handle_node_request(name, context);
+                return self.outer.node.handle_node_request(name, context);
             }
             
             inner_req
@@ -128,17 +134,17 @@ pub mod cascade {
             match event.get_phase() {
                 EventPhase::Creation => unreachable!("This should never ever occur"),
                 EventPhase::Falling => {
-                    self.outer.1.handle_event(event, context);
+                    self.outer.node.handle_event(event, context);
                     if !event.can_fall() {return}
-                    self.inner.1.handle_event(event, context);
+                    self.inner.node.handle_event(event, context);
                 },
                 EventPhase::Acting => {
-                    self.inner.1.handle_event(event, context);
+                    self.inner.node.handle_event(event, context);
                 },
                 EventPhase::Rising => {
-                    self.inner.1.handle_event(event, context);
+                    self.inner.node.handle_event(event, context);
                     if !event.can_rise() {return}
-                    self.outer.1.handle_event(event, context);
+                    self.outer.node.handle_event(event, context);
                 },
             }
         }

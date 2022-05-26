@@ -57,13 +57,16 @@ impl Backbone {
     /// Creates a new backbone instance.
     pub fn from_obj<N: NodeHandler + 'static>(root_handler: N) -> Self {
         let root_handler = Box::new(root_handler);
-        Self::from_box(("/".into(), root_handler))
+        Self::from_box(root_handler)
     }
     
     /// Creates a new backbone instance.
-    pub fn from_box(root_handler: NamedNodeHandlerBox) -> Self {
+    pub fn from_box(root_handler: NodeHandlerBox) -> Self {
         Self {
-            nodes: vec![root_handler],
+            nodes: vec![NamedNodeHandlerBox {
+                name: "/".into(),
+                node: root_handler
+            }],
             thunks: Thunks::default(),
         }
     }
