@@ -82,9 +82,9 @@ pub type NodeHandlerBox = Box<dyn NodeHandler>;
 #[derive(Debug)]
 pub struct NamedNodeHandlerBox {
     /// The name(?) of the node.
-    pub(crate) name: Arc<str>,
+    pub name: Arc<str>,
     /// The node.
-    pub(crate) node: NodeHandlerBox
+    pub node: NodeHandlerBox
 }
 
 /// Node handler storage.
