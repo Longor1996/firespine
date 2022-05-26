@@ -1,28 +1,45 @@
 #![doc = include_str!("../README.md")]
 #![deny(missing_docs)]
 
-// Global Imports
-pub use log::{info, warn, debug};
-pub use std::cell::RefCell;
-pub use std::sync::Arc;
-pub use std::any::TypeId;
-pub use downcast_rs::{Downcast, DowncastSync};
-pub use futures::future::BoxFuture;
+// --- Global Imports
+pub(crate) use std::cell::RefCell;
+pub(crate) use std::sync::Arc;
+pub(crate) use log::{info, warn, debug};
+pub(crate) use std::any::TypeId;
+pub(crate) use downcast_rs::{Downcast, DowncastSync};
 
+// --- Public Prelude
+/// API Prelude
+pub mod prelude {
+    pub use futures::channel::oneshot::channel as oneshot_channel;
+    pub use futures::channel::oneshot::Sender as OneshotSender;
+    pub use std::cell::RefCell;
+    pub use std::sync::Arc;
+    pub use crate::comp::{NodeComponent, NodeComponentSync};
+    pub use crate::event::{Event, EventSync};
+    pub use crate::node::{NodeHandler, NodeHandlerRequest, NodeHandlerAwaiter};
+    pub use crate::ctx::{OuterNodeContext, NodeContext};
+    pub use crate::Backbone;
+}
+
+// --- Re-exports of used libraries.
+pub use log;
+pub use futures;
+pub use downcast_rs;
+
+// --- Modules
 pub mod comp;
-pub use comp::*;
-
 pub mod event;
-pub use event::*;
-
 pub mod node;
-pub use node::*;
-
 pub mod thunk;
-pub use thunk::*;
-
 pub mod ctx;
-pub use ctx::*;
+
+// --- Internal Prelude
+pub(crate) use comp::*;
+pub(crate) use event::*;
+pub(crate) use node::*;
+pub(crate) use thunk::*;
+pub(crate) use ctx::*;
 
 /// The backbone: A 'hierarchy' of named nodes.
 /// 
@@ -38,11 +55,6 @@ pub struct Backbone {
 // Constructors.
 impl Backbone {
     /// Creates a new backbone instance.
-    pub fn new() -> Self {
-        Self::default()
-    }
-    
-    /// Creates a new backbone instance.
     pub fn from_obj<N: NodeHandler + 'static>(root_handler: N) -> Self {
         let root_handler = Box::new(root_handler);
         Self::from_box(("/".into(), root_handler))
@@ -57,16 +69,17 @@ impl Backbone {
     }
 }
 
+impl<N: NodeHandler + 'static> From<N> for Backbone {
+    fn from(node: N) -> Self {
+        Self::from_obj(node)
+    }
+}
+
+// This impl. is technically useless!
 #[allow(clippy::derivable_impls)]
 impl Default for Backbone {
     fn default() -> Self {
         Self::from_obj(node::empty::EmptyEventHandler)
-    }
-}
-
-impl<N: NodeHandler + 'static> From<N> for Backbone {
-    fn from(node: N) -> Self {
-        Self::from_obj(node)
     }
 }
 
