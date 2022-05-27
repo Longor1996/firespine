@@ -7,20 +7,10 @@ pub trait Event: Downcast + std::fmt::Debug {
     fn is_silent(&self) -> bool {false}
 }
 
-// This is not okay, as event types need to be 'configured':
-//impl<E: Sized + 'static> Event for E where E: Sized + std::fmt::Debug {}
-
-/// An event that is thread-safe.
-pub trait EventSync: Event + Sync + Send + DowncastSync {}
-
 use downcast_rs::impl_downcast;
 impl_downcast!(Event);
-impl_downcast!(EventSync);
 
-// Automatic impl for Send/Sync events.
-impl<E: Event> EventSync for E where E: Send + Sync {}
-
-/// An empty event.
+/// A basic empty event.
 #[derive(Debug)]
 pub struct EmptyEvent;
 impl Event for EmptyEvent {}
@@ -42,10 +32,6 @@ pub struct EventWrapper<'e> {
     /// Can the event flow back towards its source?
     can_rise: bool,
 }
-
-// Force the node context to be thread-safe.
-unsafe impl Send for EventWrapper<'_> {}
-unsafe impl Sync for EventWrapper<'_> {}
 
 impl<'e> EventWrapper<'e> {
     /// Wraps the given [`Event`] in a fresh [`EventWrapper`].
