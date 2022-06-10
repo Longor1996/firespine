@@ -21,12 +21,12 @@ impl<'c> NodeContext<'c> {
     }
     
     /// Returns a reference to a [`NodeComponent`] of the given type `C`, if one exists.
-    pub fn get_component<C: NodeComponent + 'static>(&self) -> Option<&dyn NodeComponent> {
+    pub fn get_component<C: NodeComponent + 'static>(&self) -> Option<&C> {
         let type_id = TypeId::of::<C>();
         
         for node in self.cons.iter().rev() {
             if let Some(c) = node.node.get_comp(type_id) {
-                return Some(c)
+                return c.downcast_ref()
             }
         }
         
@@ -47,12 +47,15 @@ impl<'c> NodeContext<'c> {
     }
     
     /// Returns an [`std::sync::Arc`]'d [`NodeComponent`] of the given type `C`, if one exists.
-    pub fn get_component_arc<C: NodeComponentSync + 'static>(&mut self) -> Option<Arc<dyn NodeComponentSync>> {
+    pub fn get_component_arc<C: NodeComponentSync + 'static>(&mut self) -> Option<Arc<C>> {
         let type_id = TypeId::of::<C>();
         
         for node in self.cons.iter_mut().rev() {
             if let Some(c) = node.node.get_comp_arc(type_id) {
-                return Some(c)
+                match c.into_any_arc().downcast::<C>() {
+                    Ok(c) => return Some(c),
+                    Err(_e) => continue,
+                }
             }
         }
         
