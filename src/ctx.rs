@@ -116,31 +116,62 @@ impl<'c> OuterNodeContext<'c> {
     
     /// Fires an [`Event`], wrapped in a [`EventWrapper`], to run trough the backbone to the current node.
     pub fn process_event_wrapper(&mut self, mut wrapper: EventWrapper) {
-        wrapper = wrapper.into_phase(EventPhase::Falling);
         
-        for idx in 0..self.context.cons.len() {
-            if !wrapper.can_fall() {
-                break;
+        // This walker will FALL down the backbone...
+        let falling_walker = (0..self.context.cons.len())
+            .map(|idx| (Some(idx), EventPhase::Falling))
+        ;
+        
+        // This walker will ACT on the bottom of the backbone...
+        let acting_walker = std::iter::once
+            ((None, EventPhase::Acting))
+        ;
+        
+        // This walker will RISE up thru the backbone...
+        let rising_walker = (0..self.context.cons.len())
+            .rev()
+            .map(|idx| (Some(idx), EventPhase::Rising))
+        ;
+        
+        // This iterator will first FALL, then ACT
+        // and finally RISE, in that exact order.
+        let walker = falling_walker
+            .chain(acting_walker)
+            .chain(rising_walker)
+        ;
+        
+        // Ready, set, iterate!
+        for (idx, phase) in walker {
+            match &phase {
+                // Should never happen; but handle it anyway! ¯\_(ツ)_/¯
+                EventPhase::Creation => continue,
+                
+                // Check if any previous iteration of the FALL-phase cancelled falling
+                EventPhase::Falling if !wrapper.can_fall() => continue,
+                
+                // Check if any previous iteration cancelled acting
+                EventPhase::Acting if !wrapper.can_eval() => continue,
+                
+                // Check if any previous iteration cancelled rising
+                EventPhase::Rising if !wrapper.can_rise() => continue,
+                
+                // proceed with event handling
+                _ => ()
             }
             
-            if let Some(mut subctx) = self.get_subcontext_at(idx) {
-                subctx.current.node.handle_event(&mut wrapper, &mut subctx.context);
-            }
-        }
-        
-        if wrapper.can_eval() {
-            wrapper = wrapper.into_phase(EventPhase::Acting);
-            self.current.node.handle_event(&mut wrapper, &mut self.context);
-        }
-        
-        wrapper = wrapper.into_phase(EventPhase::Rising);
-        for idx in (0..self.context.cons.len()).rev() {
-            if !wrapper.can_rise() {
-                break;
+            // Phase change? Update wrapper!
+            if phase > wrapper.get_phase() {
+                wrapper = wrapper.into_phase(phase);
             }
             
-            if let Some(mut subctx) = self.get_subcontext_at(idx) {
-                subctx.current.node.handle_event(&mut wrapper, &mut subctx.context);
+            if let Some(idx) = idx {
+                if let Some(mut subctx) = self.get_subcontext_at(idx) {
+                    subctx.current.node.handle_event(&mut wrapper, &mut subctx.context);
+                }
+            } else {
+                // This branch only get's called once,
+                // during the ACT phase, precisely between FALL and RISE.
+                self.current.node.handle_event(&mut wrapper, &mut self.context);
             }
         }
         

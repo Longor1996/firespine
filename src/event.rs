@@ -119,7 +119,7 @@ impl<'e> std::ops::DerefMut for EventWrapper<'e> {
 }
 
 /// Represents the phase (or state) of an event as it's being processed.
-#[derive(Eq, PartialEq, Hash, Clone, Copy, Debug)]
+#[derive(Eq, PartialEq, Hash, Clone, Copy, Debug, Ord, PartialOrd)]
 pub enum EventPhase {
     /// The event is being wrapped in a `EventWrapper`.
     Creation = 1,
