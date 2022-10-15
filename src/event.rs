@@ -45,6 +45,11 @@ impl<'e> EventWrapper<'e> {
         }
     }
     
+    /// Unwraps the [`EventWrapper`] into the wrapped [`Event`]-ref.
+    pub fn unwrap(self) -> &'e mut dyn Event {
+        self.event
+    }
+    
     /// Prevents the event from being evaluated by its destination.
     pub fn prevent_action(&mut self) {
         self.can_eval = false;
