@@ -80,6 +80,26 @@ impl<'e> EventWrapper<'e> {
         self.can_rise
     }
     
+    /// Are we allowed to ...?
+    pub fn can(&self, phase: EventPhase) -> bool {
+        match phase {
+            // Should never happen; but handle it anyway! ¯\_(ツ)_/¯
+            EventPhase::Creation => false,
+            
+            // Check if any previous iteration of the FALL-phase cancelled falling
+            EventPhase::Falling if !self.can_fall() => false,
+            
+            // Check if any previous iteration cancelled acting
+            EventPhase::Acting if !self.can_eval() => false,
+            
+            // Check if any previous iteration cancelled rising
+            EventPhase::Rising if !self.can_rise() => false,
+            
+            // proceed with event handling
+            _ => true
+        }
+    }
+    
     /// Stop the event completely.
     pub fn stop(&mut self) {
         self.can_fall = false;
@@ -100,6 +120,17 @@ impl<'e> EventWrapper<'e> {
     /// Move into another phase.
     pub fn into_phase(self, phase: EventPhase) -> Self {
         Self {phase, ..self}
+    }
+    
+    /// Try to move into the next phase.
+    pub fn next_phase(&mut self, phase: EventPhase) -> bool {
+        // Phase change? Update wrapper!
+        if phase > self.phase {
+            self.phase = phase;
+            true
+        } else {
+            false
+        }
     }
 }
 
