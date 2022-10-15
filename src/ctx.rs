@@ -12,6 +12,14 @@ pub struct NodeContext<'c> {
     pub cons: &'c mut [NamedNodeHandlerBox],
 }
 
+impl<'c> std::fmt::Debug for NodeContext<'c> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("NodeContext")
+            .field("name", &self.name)
+            .field("prev", &self.cons).finish()
+    }
+}
+
 impl<'c> NodeContext<'c> {
     
     /// Returns the fully formed name for a child with the given partial name.
@@ -71,6 +79,14 @@ pub struct OuterNodeContext<'c> {
     
     /// The currently active node.
     pub(crate) current: &'c mut NamedNodeHandlerBox
+}
+
+impl<'c> std::fmt::Debug for OuterNodeContext<'c> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("OuterNodeContext")
+            .field("context", &self.context)
+            .field("current", &self.current).finish()
+    }
 }
 
 // TODO: Does it make sense to deref the NodeContext?
