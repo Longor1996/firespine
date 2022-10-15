@@ -106,6 +106,11 @@ impl<'c> std::ops::DerefMut for OuterNodeContext<'c> {
 
 impl<'c> OuterNodeContext<'c> {
     
+    /// Returns a mutable reference to the current node.
+    pub fn get_current_node(&mut self) -> &mut NamedNodeHandlerBox {
+        self.current
+    }
+    
     /// Returns the fully formed name for a child with the given partial name.
     pub fn get_child_name(&self, name: &str) -> Arc<str> {
         self.context.get_child_name(name)
