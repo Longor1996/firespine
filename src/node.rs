@@ -3,7 +3,7 @@
 use crate::*;
 
 /// All user-logic and -state for a node is owned by it's associated handler.
-pub trait NodeHandler: std::fmt::Debug {
+pub trait NodeHandler: Downcast + std::fmt::Debug {
     /// Called when a new child-node is to be created.
     /// 
     /// **Note:**
@@ -66,6 +66,9 @@ pub trait NodeHandler: std::fmt::Debug {
         _ctype: TypeId
     ) -> Option<Arc<dyn NodeComponentSync>> {None}
 }
+
+use downcast_rs::impl_downcast;
+impl_downcast!(NodeHandler);
 
 /// TODO: Implement.
 pub trait NodeHandlerSync: NodeHandler + Send + Sync {
