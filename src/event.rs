@@ -18,19 +18,19 @@ impl Event for EmptyEvent {}
 /// Wraps an event as it is processed by the backbone.
 pub struct EventWrapper<'e> {
     /// The event being processed.
-    event: &'e mut dyn Event,
+    pub(crate) event: &'e mut dyn Event,
 
     // State of the event.
-    phase: EventPhase,
+    pub(crate) phase: EventPhase,
 
     /// Can the event flow towards its destination?
-    can_fall: bool,
+    pub(crate) can_fall: bool,
 
     /// Can the event be evaluated by its destination?
-    can_eval: bool,
+    pub(crate) can_eval: bool,
 
     /// Can the event flow back towards its source?
-    can_rise: bool,
+    pub(crate) can_rise: bool,
 }
 
 impl<'e> EventWrapper<'e> {
