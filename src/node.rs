@@ -36,7 +36,7 @@ pub trait NodeHandler: std::fmt::Debug + Send + Sync {
         &'e mut self,
         event: &'e mut EventWrapper,
         context: &'e mut NodeContext,
-    ) {
+    ) -> SubEvent {
         if !event.is_silent() {
             crate::debug!(
                 "EVENT {} AT {}: {:?}",
@@ -45,6 +45,7 @@ pub trait NodeHandler: std::fmt::Debug + Send + Sync {
                 event.get_event()
             );
         }
+        None
     }
     
     /// Called by [`NodeContext`] to fetch a component for a descendant node (or the backbone).
@@ -77,6 +78,9 @@ pub type NodeHandlerCreated = Result<NamedNodeHandlerBox, Box<dyn std::error::Er
 
 /// A box holding a [`NodeHandler`] instance.
 pub type NodeHandlerBox = Box<dyn NodeHandler>;
+
+/// A optional box holding an [`Event`].
+pub type SubEvent = Option<Box<dyn Event>>;
 
 /// A named [`NodeHandlerBox`].
 #[derive(Debug)]
@@ -130,21 +134,23 @@ pub mod cascade {
             &'e mut self,
             event: &'e mut EventWrapper,
             context: &'e mut NodeContext,
-        ) {
+        ) -> SubEvent {
             match event.get_phase() {
                 EventPhase::Creation => unreachable!("This should never ever occur"),
                 EventPhase::Falling => {
+                    // TODO: Handle sub-event returned by the outer node.
                     self.outer.node.handle_event(event, context);
-                    if !event.can_fall() {return}
-                    self.inner.node.handle_event(event, context);
+                    if !event.can_fall() {return None}
+                    self.inner.node.handle_event(event, context)
                 },
                 EventPhase::Acting => {
-                    self.inner.node.handle_event(event, context);
+                    self.inner.node.handle_event(event, context)
                 },
                 EventPhase::Rising => {
+                    // TODO: Handle sub-event returned by the inner node.
                     self.inner.node.handle_event(event, context);
-                    if !event.can_rise() {return}
-                    self.outer.node.handle_event(event, context);
+                    if !event.can_rise() {return None}
+                    self.outer.node.handle_event(event, context)
                 },
             }
         }

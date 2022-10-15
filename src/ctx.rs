@@ -95,8 +95,10 @@ impl<'c> OuterNodeContext<'c> {
         self.context.get_child_name(name)
     }
     
-    /// Returns a new [`OuterNodeContext`] that is a subset of this context *excluding* the current node.
-    pub fn get_subcontext_at(&mut self, at: usize) -> Option<OuterNodeContext> {
+    /// Returns a new [`OuterNodeContext`] that is a subset of this context, BEFORE `at`.
+    /// 
+    /// The current node of this context is *excluded* from the result.
+    pub fn get_subcontext_before(&mut self, at: usize) -> Option<OuterNodeContext> {
         if at > self.context.cons.len() {return None}
         let (start, end) = self.context.cons.split_at_mut(at);
         
@@ -106,6 +108,22 @@ impl<'c> OuterNodeContext<'c> {
                 cons: &mut * start,
             },
             current: &mut end[0]
+        })
+    }
+    
+    /// Returns a new [`OuterNodeContext`] that is a subset of this context, AFTER `at`.
+    /// 
+    /// The current node of this context is preserved.
+    pub fn get_subcontext_after(&mut self, at: usize) -> Option<OuterNodeContext> {
+        if at > self.context.cons.len() {return None}
+        let (_start, end) = self.context.cons.split_at_mut(at);
+        
+        Some(OuterNodeContext {
+            context: NodeContext {
+                name: end[0].name.clone(),
+                cons: &mut * end,
+            },
+            current: self.current
         })
     }
     
@@ -135,43 +153,49 @@ impl<'c> OuterNodeContext<'c> {
         
         // This iterator will first FALL, then ACT
         // and finally RISE, in that exact order.
-        let walker = falling_walker
+        let mut walker = std::iter::empty()
+            .chain(falling_walker)
             .chain(acting_walker)
             .chain(rising_walker)
+            .peekable()
         ;
         
         // Ready, set, iterate!
-        for (idx, phase) in walker {
-            match &phase {
-                // Should never happen; but handle it anyway! ¯\_(ツ)_/¯
-                EventPhase::Creation => continue,
-                
-                // Check if any previous iteration of the FALL-phase cancelled falling
-                EventPhase::Falling if !wrapper.can_fall() => continue,
-                
-                // Check if any previous iteration cancelled acting
-                EventPhase::Acting if !wrapper.can_eval() => continue,
-                
-                // Check if any previous iteration cancelled rising
-                EventPhase::Rising if !wrapper.can_rise() => continue,
-                
-                // proceed with event handling
-                _ => ()
+        loop {
+            let (idx, phase) = match walker.next() {
+                Some(s) => s,
+                None => break,
+            };
+            
+            if !wrapper.can(phase) {
+                continue;
             }
             
-            // Phase change? Update wrapper!
-            if phase > wrapper.get_phase() {
-                wrapper = wrapper.into_phase(phase);
-            }
+            wrapper.next_phase(phase); //if?
             
-            if let Some(idx) = idx {
-                if let Some(mut subctx) = self.get_subcontext_at(idx) {
-                    subctx.current.node.handle_event(&mut wrapper, &mut subctx.context);
+            let sub = if let Some(idx) = idx {
+                if let Some(mut subctx) = self.get_subcontext_before(idx) {
+                    subctx.current.node.handle_event(&mut wrapper, &mut subctx.context)
+                } else {
+                    None
                 }
             } else {
                 // This branch only get's called once,
                 // during the ACT phase, precisely between FALL and RISE.
-                self.current.node.handle_event(&mut wrapper, &mut self.context);
+                self.current.node.handle_event(&mut wrapper, &mut self.context)
+            };
+            
+            if let Some(mut sub_event) = sub {
+                // This makes events returned by the ACT-phase a no-op
+                if let Some(idx) = idx {
+                    if let Some(mut ctx) = self.get_subcontext_after(idx + 1) {
+                        // TODO: This impl is terrible. Find a better way.
+                        ctx.process_event_wrapper(EventWrapper {
+                            event: sub_event.as_mut(),
+                            ..wrapper
+                        });
+                    }
+                }
             }
         }
         
@@ -215,7 +239,7 @@ impl Backbone {
     }
     
     /// Returns an [`OuterNodeContext`] focused on the node indicated by the `at`-parameter.
-    pub fn get_context_at(&mut self, at: usize) -> Option<OuterNodeContext> {
+    pub(crate) fn get_subcontext_before(&mut self, at: usize) -> Option<OuterNodeContext> {
         if at > self.nodes.len() {return None}
         let (start, end) = self.nodes.split_at_mut(at);
         

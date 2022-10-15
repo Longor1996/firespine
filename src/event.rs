@@ -35,7 +35,7 @@ pub struct EventWrapper<'e> {
 
 impl<'e> EventWrapper<'e> {
     /// Wraps the given [`Event`] in a fresh [`EventWrapper`].
-    pub fn new(event: &'e mut dyn Event) -> Self {
+    pub(crate) fn new(event: &'e mut dyn Event) -> Self {
         Self {
             event,
             phase: EventPhase::Creation,
