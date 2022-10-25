@@ -7,10 +7,22 @@ pub trait NodeComponent: Downcast {
     fn is_of_type(&self, ctype: TypeId) -> bool {
         self.type_id() == ctype
     }
+    
+    /// Returns the type-id for this component.
+    fn get_component_type_id(&self) -> TypeId {
+        self.type_id()
+    }
+    
+    /// Returns a internal name for the component.
+    fn get_component_name(&self) -> &str;
 }
 
 // Automatic impl for sized components.
-impl<C: Sized + 'static> NodeComponent for C where C: Sized {}
+impl<C: Sized + 'static> NodeComponent for C where C: Sized {
+    fn get_component_name(&self) -> &str {
+        std::any::type_name::<C>()
+    }
+}
 
 /// A component that is also Send/Sync.
 pub trait NodeComponentSync: NodeComponent + DowncastSync + Send + Sync {
