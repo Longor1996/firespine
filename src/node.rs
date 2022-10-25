@@ -143,6 +143,21 @@ pub mod cstore {
         }
     }
     
+    impl CStoreEventHandler {
+        /// Merges the given [`Self`] into this `self`.
+        pub fn with(&mut self, other: CStoreEventHandler) {
+            let Self {
+                stored,
+                celled,
+                shared
+            } = other;
+            self.stored.extend(stored);
+            self.celled.extend(celled);
+            self.shared.extend(shared);
+        }
+        
+    }
+    
     impl Default for CStoreEventHandler {
         fn default() -> Self {
             Self {
