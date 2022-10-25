@@ -214,7 +214,7 @@ pub mod cascade {
             
             inner_req
         }
-
+        
         fn handle_event<'e>(
             &'e mut self,
             event: &'e mut EventWrapper,
@@ -238,6 +238,27 @@ pub mod cascade {
                     self.outer.node.handle_event(event, context)
                 },
             }
+        }
+        
+        fn get_comp(
+            &self,
+            ctype: TypeId
+        ) -> Option<&dyn NodeComponent> {
+            self.inner.node.get_comp(ctype).or_else(||self.outer.node.get_comp(ctype))
+        }
+        
+        fn get_comp_mut(
+            &self,
+            ctype: TypeId
+        ) -> Option<&RefCell<dyn NodeComponent>> {
+            self.inner.node.get_comp_mut(ctype).or_else(||self.outer.node.get_comp_mut(ctype))
+        }
+        
+        fn get_comp_arc(
+            &self,
+            ctype: TypeId
+        ) -> Option<Arc<dyn NodeComponentSync>> {
+            self.inner.node.get_comp_arc(ctype).or_else(||self.outer.node.get_comp_arc(ctype))
         }
     }
 
