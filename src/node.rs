@@ -112,6 +112,81 @@ pub mod empty {
     impl NodeHandler for EmptyEventHandler {}
 }
 
+/// A handler that simply stores components.
+pub mod cstore {
+    use super::*;
+    
+    /// An event-handler that does precisely nothing.
+    pub struct CStoreEventHandler {
+        stored: std::collections::HashMap<std::any::TypeId, Box<dyn NodeComponent>>,
+        celled: std::collections::HashMap<std::any::TypeId, Box<RefCell<dyn NodeComponent>>>,
+        shared: std::collections::HashMap<std::any::TypeId, Arc<dyn NodeComponentSync>>,
+    }
+    
+    impl CStoreEventHandler {
+        /// Adds a new [`NodeComponent`] to this store.
+        pub fn insert_box(&mut self, comp: Box<dyn NodeComponent>) -> bool {
+            let type_id = comp.get_component_type_id();
+            self.stored.insert(type_id, comp).is_none()
+        }
+        
+        /// Adds a new [`NodeComponent`] to this store.
+        pub fn insert_cell(&mut self, comp: Box<dyn NodeComponent>) -> bool {
+            let type_id = comp.get_component_type_id();
+            self.celled.insert(type_id, Box::new(RefCell::new(comp))).is_none()
+        }
+        
+        /// Adds a new [`NodeComponent`] to this store.
+        pub fn insert_arc(&mut self, comp: Arc<dyn NodeComponentSync>) -> bool {
+            let type_id = comp.get_component_type_id();
+            self.shared.insert(type_id, comp).is_none()
+        }
+    }
+    
+    impl Default for CStoreEventHandler {
+        fn default() -> Self {
+            Self {
+                stored: Default::default(),
+                celled: Default::default(),
+                shared: Default::default(),
+            }
+        }
+    }
+    
+    impl std::fmt::Debug for CStoreEventHandler {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.debug_struct("CStoreEventHandler")
+                .field("box", &self.stored.keys())
+                .field("cel", &self.celled.keys())
+                .field("arc", &self.shared.keys())
+                .finish()
+        }
+    }
+    
+    impl NodeHandler for CStoreEventHandler {
+        fn get_comp(
+            &self,
+            ctype: TypeId
+        ) -> Option<&dyn NodeComponent> {
+            self.stored.get(&ctype).map(|comp| comp.as_ref())
+        }
+
+        fn get_comp_mut(
+            &self,
+            ctype: TypeId
+        ) -> Option<&RefCell<dyn NodeComponent>> {
+            self.celled.get(&ctype).map(|comp| comp.as_ref())
+        }
+
+        fn get_comp_arc(
+            &self,
+            ctype: TypeId
+        ) -> Option<Arc<dyn NodeComponentSync>> {
+            self.shared.get(&ctype).map(|comp| comp.clone())
+        }
+    }
+}
+
 /// A handler that combines two other handlers.
 pub mod cascade {
     use super::*;
