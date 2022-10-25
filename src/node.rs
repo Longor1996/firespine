@@ -194,8 +194,10 @@ pub mod cascade {
     /// An event-handler that does precisely nothing.
     #[derive(Debug)]
     pub struct CascadingEventHandler {
-        outer: NamedNodeHandlerBox,
-        inner: NamedNodeHandlerBox,
+        /// The outer node.
+        pub(crate) outer: NamedNodeHandlerBox,
+        /// The inner node.
+        pub(crate) inner: NamedNodeHandlerBox,
     }
     
     impl NodeHandler for CascadingEventHandler {
