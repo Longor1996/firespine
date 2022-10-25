@@ -74,7 +74,7 @@ impl Backbone {
     /// Wraps the current root with the given handler to form a cascade.
     pub fn cascade<N: NodeHandler + 'static>(self, handler: N) -> Self {
         let Self { mut nodes, .. } = self;
-        if nodes.len() == 1 {panic!("can only cascade when the root is the sole node")}
+        if nodes.len() != 1 {panic!("can only cascade when the root is the sole node")}
         let node = nodes.remove(0);
         let handler = Box::new(handler);
         
