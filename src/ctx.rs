@@ -29,7 +29,7 @@ impl<'c> NodeContext<'c> {
     }
     
     /// Returns a reference to a [`NodeComponent`] of the given type `C`, if one exists.
-    pub fn get_component<C: NodeComponent + 'static>(&self) -> Option<&C> {
+    pub fn get_cons_component<C: NodeComponent + 'static>(&self) -> Option<&C> {
         let type_id = TypeId::of::<C>();
         
         for node in self.cons.iter().rev() {
@@ -42,10 +42,10 @@ impl<'c> NodeContext<'c> {
     }
     
     /// Returns a [`std::cell::RefCell`]'d [`NodeComponent`] of the given type `C`, if one exists.
-    pub fn get_component_mut<C: NodeComponent + 'static>(&mut self) -> Option<&RefCell<dyn NodeComponent>> {
+    pub fn get_cons_component_mut<C: NodeComponent + 'static>(&self) -> Option<&RefCell<dyn NodeComponent>> {
         let type_id = TypeId::of::<C>();
         
-        for node in self.cons.iter_mut().rev() {
+        for node in self.cons.iter().rev() {
             if let Some(c) = node.node.get_comp_mut(type_id) {
                 return Some(c)
             }
@@ -55,10 +55,10 @@ impl<'c> NodeContext<'c> {
     }
     
     /// Returns an [`std::sync::Arc`]'d [`NodeComponent`] of the given type `C`, if one exists.
-    pub fn get_component_arc<C: NodeComponentSync + 'static>(&mut self) -> Option<Arc<C>> {
+    pub fn get_cons_component_arc<C: NodeComponentSync + 'static>(&self) -> Option<Arc<C>> {
         let type_id = TypeId::of::<C>();
         
-        for node in self.cons.iter_mut().rev() {
+        for node in self.cons.iter().rev() {
             if let Some(c) = node.node.get_comp_arc(type_id) {
                 match c.into_any_arc().downcast::<C>() {
                     Ok(c) => return Some(c),
@@ -222,6 +222,31 @@ impl<'c> OuterNodeContext<'c> {
         
         // We are done!
     }
+    
+    /// Returns a reference to a [`NodeComponent`] of the given type `C`, if one exists.
+    pub fn get_component<C: NodeComponent + 'static>(&self) -> Option<&C> {
+        let type_id = TypeId::of::<C>();
+        self.current.node.get_comp(type_id)
+            .and_then(|c| c.downcast_ref::<C>())
+            .or_else(||self.context.get_cons_component::<C>())
+    }
+    
+    /// Returns a reference to a [`NodeComponent`] of the given type `C`, if one exists.
+    pub fn get_component_mut<C: NodeComponent + 'static>(&self) -> Option<&RefCell<dyn NodeComponent>> {
+        let type_id = TypeId::of::<C>();
+        self.current.node.get_comp_mut(type_id)
+            .or_else(||self.context.get_cons_component_mut::<C>())
+    }
+    
+    /// Returns a reference to a [`NodeComponentSync`] of the given type `C`, if one exists.
+    pub fn get_component_arc<C: NodeComponentSync + 'static>(&self) -> Option<Arc<C>> {
+        let type_id = TypeId::of::<C>();
+        self.current.node.get_comp_arc(type_id)
+            .and_then(|c| c.into_any_arc().downcast::<C>().ok())
+            .or_else(||self.context.get_cons_component_arc::<C>())
+    }
+    
+    
 }
 
 impl Backbone {
