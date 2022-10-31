@@ -17,7 +17,7 @@ pub mod prelude {
     pub use std::sync::Arc;
     pub use crate::comp::{NodeComponent, NodeComponentSync};
     pub use crate::event::{Event, EventWrapper, EventPhase};
-    pub use crate::node::{NodeHandler, NodeHandlerRequestRes, NodeHandlerRequest};
+    pub use crate::node::{NodeHandler, NodeHandlerRequestRes, NodeHandlerRequest, cstore::CStoreEventHandler};
     pub use crate::ctx::{OuterNodeContext, NodeContext};
     pub use crate::Backbone;
 }
