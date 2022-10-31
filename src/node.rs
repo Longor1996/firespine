@@ -126,19 +126,19 @@ pub mod cstore {
     impl CStoreEventHandler {
         /// Adds a new [`NodeComponent`] to this store.
         pub fn insert_box(&mut self, comp: Box<dyn NodeComponent>) -> bool {
-            let type_id = comp.get_component_type_id();
+            let type_id = comp.type_id();
             self.stored.insert(type_id, comp).is_none()
         }
         
         /// Adds a new [`NodeComponent`] to this store.
         pub fn insert_cell(&mut self, comp: Box<dyn NodeComponent>) -> bool {
-            let type_id = comp.get_component_type_id();
+            let type_id = comp.type_id();
             self.celled.insert(type_id, Box::new(RefCell::new(comp))).is_none()
         }
         
         /// Adds a new [`NodeComponent`] to this store.
         pub fn insert_arc(&mut self, comp: Arc<dyn NodeComponentSync>) -> bool {
-            let type_id = comp.get_component_type_id();
+            let type_id = comp.type_id();
             self.shared.insert(type_id, comp).is_none()
         }
     }
@@ -199,6 +199,21 @@ pub mod cstore {
         ) -> Option<Arc<dyn NodeComponentSync>> {
             self.shared.get(&ctype).map(|comp| comp.clone())
         }
+    }
+    
+    /// Make sure that components are stored with their type_id as key.
+    #[test]
+    fn test_cstore() {
+        let mut cstore = CStoreEventHandler::default();
+        
+        assert!(cstore.insert_box(Box::new("stringy box".to_string())) == true);
+        assert!(cstore.insert_box(Box::new(Vec::<String>::default())) == true);
+        
+        assert!(cstore.insert_cell(Box::new("stringy box".to_string())) == true);
+        assert!(cstore.insert_cell(Box::new(Vec::<String>::default())) == true);
+        
+        assert!(cstore.insert_arc(Arc::new("stringy box".to_string())) == true);
+        assert!(cstore.insert_arc(Arc::new(Vec::<String>::default())) == true);
     }
 }
 

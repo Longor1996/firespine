@@ -8,10 +8,10 @@ pub trait NodeComponent: Downcast {
         self.type_id() == ctype
     }
     
-    /// Returns the type-id for this component.
-    fn get_component_type_id(&self) -> TypeId {
-        self.type_id()
-    }
+    // /// Returns the type-id for this component.
+    // fn get_component_type_id(&self) -> TypeId {
+    //     self.type_id()
+    // }
     
     /// Returns a internal name for the component.
     fn get_component_name(&self) -> &str;
